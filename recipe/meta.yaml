@@ -6,12 +6,12 @@ package:
   version: {{ version }}
 
 source:
-  url: https://pypi.org/packages/source/{{ name[0] }}/{{ name }}/fastuuid-{{ version }}.tar.gz
+  url: https://pypi.org/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz
   sha256: 178947fc2f995b38497a74172adee64fdeb8b7ec18f2a5934d037641ba265d26
 
 build:
   number: 0
-  skip: true  # [osx and py==310]
+  skip: true  # [py<38]
   script_env:
     - PYO3_USE_ABI3_FORWARD_COMPATIBILITY=1
   script:
@@ -20,37 +20,45 @@ build:
 
 requirements:
   build:
-    - python                                 # [build_platform != target_platform]
-    - cross-python_{{ target_platform }}     # [build_platform != target_platform]
-    - {{ compiler('c') }}
-    - {{ compiler('cxx') }}
-    - {{ compiler('rust') }}
     - {{ stdlib('c') }}
+    - {{ compiler('c') }}
+    - {{ compiler('rust') }}
     - maturin >=1.0,<2.0
     - cargo-bundle-licenses
   host:
-    - python
     - pip
+    - python
     - maturin >=1.0,<2.0
   run:
     - python
 
+# ModuleNotFoundError: No module named 'uuid_extensions'
+{% set ignore_tests = "--ignore=tests/test_benchmarks.py" %}
+
 test:
+  source_files:
+    - tests
   imports:
     - fastuuid
-  commands:
-    - pip check
   requires:
     - pip
-    - python
+    - pytest
+    - hypothesis
+  commands:
+    - pip check
+    - pytest -v tests {{ ignore_tests }}
 
 about:
-  summary: "Python bindings to Rust's UUID library."
   home: https://github.com/fastuuid/fastuuid
   license: BSD-3-Clause
+  license_family: BSD
   license_file:
     - LICENSE
     - THIRDPARTY.yml
+  summary: Python bindings to Rust's UUID library
+  description: Python bindings to Rust's UUID library
+  doc_url: https://github.com/fastuuid/fastuuid
+  dev_url: https://github.com/fastuuid/fastuuid
 
 extra:
   recipe-maintainers:
